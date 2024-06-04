@@ -25,17 +25,15 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
-import tempfile
 import xacro
 
 def generate_launch_description():
-    launch_file_dir = os.path.join(get_package_share_directory('deliverybot'), 'launch')
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
     
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
     
-    x_pose = LaunchConfiguration('x_pose', default='-2.0')
-    y_pose = LaunchConfiguration('y_pose', default='-0.5')
+    x_pose = LaunchConfiguration('x_pose', default='0.0')
+    y_pose = LaunchConfiguration('y_pose', default='0.0')
     z_pose = LaunchConfiguration('y_pose', default='0.0')
 
     world = os.path.join(
@@ -72,19 +70,12 @@ def generate_launch_description():
         )
     )
 
-    robot_state_publisher_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(launch_file_dir, 'robot_state_publisher.launch.py')
-        ),
-        launch_arguments={'use_sim_time': use_sim_time}.items()
-    )
-
     urdf_spawner_cmd = Node(
         package='gazebo_ros',
         executable='spawn_entity.py',
         output='screen',
         respawn=False,
-        arguments=["-file", sdf_path, "-entity","realsense_cam", '-x', x_pose,
+        arguments=["-file", sdf_path, "-entity","deliveryBot", '-x', x_pose,
                    '-y', y_pose, '-z', z_pose]
     )
 
