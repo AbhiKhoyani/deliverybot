@@ -31,8 +31,7 @@ import xacro
 def generate_launch_description():
     launch_file_dir = os.path.join(get_package_share_directory('deliverybot'), 'launch')
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
-    pkg_realsense2_desc = get_package_share_directory('realsense2_description')
-
+    
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
     
     x_pose = LaunchConfiguration('x_pose', default='-2.0')
@@ -56,59 +55,38 @@ def generate_launch_description():
         'models',
         'model.sdf'
     )
-    # urdf_path = tempfile.mktemp(prefix="%s_" % os.path.basename(xacro_path))
-    # doc = xacro.process_file(xacro_path)
-    # out = xacro.open_output(urdf_path)
-    # out.write(doc.toprettyxml(indent='  '))
-
-    # with open(xacro_path, 'r') as infp:
-    #     robot_desc = infp.read()
 
     robot_desc_config = xacro.process_file(xacro_path)
     robot_desc = robot_desc_config.toxml()
 
-    gazebo_cmd = IncludeLaunchDescription(
+    gzserver_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')
+            os.path.join(pkg_gazebo_ros, 'launch', 'gzserver.launch.py')
+        ),
+        launch_arguments={'world': world}.items()
+    )
+
+    gzclient_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')
         )
     )
-    
-    # gzserver_cmd = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(pkg_gazebo_ros, 'launch', 'gzserver.launch.py')
-    #     ),
-    #     launch_arguments={'world': world}.items()
-    # )
 
-    # gzclient_cmd = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')
-    #     )
-    # )
-
-    # robot_state_publisher_cmd = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(launch_file_dir, 'robot_state_publisher.launch.py')
-    #     ),
-    #     launch_arguments={'use_sim_time': use_sim_time}.items()
-    # )
+    robot_state_publisher_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(launch_file_dir, 'robot_state_publisher.launch.py')
+        ),
+        launch_arguments={'use_sim_time': use_sim_time}.items()
+    )
 
     urdf_spawner_cmd = Node(
         package='gazebo_ros',
         executable='spawn_entity.py',
         output='screen',
         respawn=False,
-        arguments=["-file", sdf_path, "-entity","realsense_cam"]
+        arguments=["-file", sdf_path, "-entity","realsense_cam", '-x', x_pose,
+                   '-y', y_pose, '-z', z_pose]
     )
-
-    # urdf_spawner_cmd = Node(
-    #     package='realsense2_description',
-    #     executable='spawn_robot.py',
-    #     name='urdf_spawner',
-    #     output='screen',
-    #     respawn=False,
-    #     arguments=[robot_desc, x_pose, y_pose, z_pose]
-    # )
 
     rviz_cmd = Node(
         package='rviz2',
@@ -123,7 +101,6 @@ def generate_launch_description():
         executable='robot_state_publisher',
         name='robot_state_publisher',
         output='screen',
-        # arguments=[urdf_path],
         parameters=[{
             'use_sim_time': use_sim_time,
             'robot_description': robot_desc
@@ -133,11 +110,10 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     # Add the commands to the launch description
-    ld.add_action(gazebo_cmd)
-    # ld.add_action(gzserver_cmd)
-    # ld.add_action(gzclient_cmd)
-    # ld.add_action(robot_state_publisher_cmd)
-    # ld.add_action(rviz_cmd)
-    # ld.add_action(urdf_spawner_cmd)
+    ld.add_action(gzserver_cmd)
+    ld.add_action(gzclient_cmd)
+    ld.add_action(robot_state_publisher_cmd)
+    ld.add_action(rviz_cmd)
+    ld.add_action(urdf_spawner_cmd)
 
     return ld
