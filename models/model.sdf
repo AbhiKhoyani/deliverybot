@@ -93,13 +93,14 @@
         <visualize>0</visualize>
         <plugin name="cam_left_controller" filename="libgazebo_ros_camera.so">
           <hack_baseline>0.07</hack_baseline>
+          <!-- <frame_name>cam_left_depth_optical_frame</frame_name> -->
         </plugin>
       </sensor>
     </link>
 
     <link name="cam_right_link">
       <inertial>
-        <pose>-0.0302 -0.03 0.182 0 0 0</pose>
+        <pose>-0.0302 0.03 0.182 0 0 0</pose>
         <inertia>
           <ixx>0.001</ixx>
           <ixy>0.000</ixy>
@@ -111,7 +112,7 @@
         <mass>0.114</mass>
       </inertial>
       <collision name="cam_right_collision">
-        <pose>-0.0302 -0.03 0.182 0 0 0</pose>
+        <pose>-0.0302 0.03 0.182 0 0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.0508</radius>
@@ -150,6 +151,7 @@
         <visualize>0</visualize>
         <plugin name="cam_right_controller" filename="libgazebo_ros_camera.so">
           <hack_baseline>0.07</hack_baseline>
+          <frame_name>cam_right_depth_optical_frame</frame_name>
         </plugin>
       </sensor>
     </link>
@@ -336,7 +338,7 @@
   <joint name="cam_left_joint" type="fixed">
     <parent>base_link</parent>
     <child>cam_left_link</child>
-    <pose>0.0302 -0.03 0.182 -0.3491 1.57 0</pose>
+    <pose>0.048 0.042 0.182 -1.57 0 -1.57</pose>
     <axis>
       <xyz>0 0 0</xyz>
     </axis>
@@ -345,10 +347,22 @@
   <joint name="cam_right_joint" type="fixed">
     <parent>base_link</parent>
     <child>cam_right_link</child>
-    <pose>0.0302 0.03 0.182 0.3491 1.57 0</pose>
+    <pose>0.036 -0.009 0.182 -0.3491 1.57 0</pose>
     <axis>
       <xyz>0 0 0</xyz>
     </axis>
+  </joint>
+
+  <joint name="cam_left_depth_optical_joint" type="fixed">
+    <pose> 0 0 0 1.57079632679 1.57079632679 0</pose>
+    <parent>cam_left_link</parent>
+    <child>cam_left_depth_optical_frame</child>
+  </joint>
+  
+  <joint name="cam_right_depth_optical_joint" type="fixed">
+    <pose> 0 0 0 1.57079632679 1.57079632679 0</pose>
+    <parent>cam_right_link</parent>
+    <child>cam_right_depth_optical_frame</child>
   </joint>
 
     <plugin name="turtlebot3_diff_drive" filename="libgazebo_ros_diff_drive.so">
