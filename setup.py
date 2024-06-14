@@ -15,8 +15,11 @@ setup(
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*launch.[pxy][yma]*'))),
         (os.path.join('share', package_name, 'models'), glob(os.path.join('models', '*.sdf'))),
         (os.path.join('share', package_name, 'models', 'deliverybot'), glob(os.path.join('models', 'deliverybot' ,'*'))),
+        (os.path.join('share', package_name, 'models', 'checkerboard'), glob(os.path.join('models', 'checkerboard' ,'*'))),
         (os.path.join('share', package_name, 'urdf'), glob(os.path.join('urdf', '*.urdf*'))),
         (os.path.join('share', package_name, 'rviz'), glob(os.path.join('rviz', '*.rviz'))),
+        (os.path.join('share', package_name, 'scripts'), glob(os.path.join('scripts', '*.sh'))),
+        (os.path.join('share', package_name, 'worlds'), glob(os.path.join('worlds', '*.world'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -27,6 +30,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'mergepcd.py=deliverybot.mergepcd:main',
         ],
     },
 )

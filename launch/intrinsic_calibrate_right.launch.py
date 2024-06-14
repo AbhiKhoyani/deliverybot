@@ -25,37 +25,27 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
-import xacro
-
 def generate_launch_description():
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
     
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-    
-    x_pose = LaunchConfiguration('x_pose', default='0.0')
-    y_pose = LaunchConfiguration('y_pose', default='0.0')
-    z_pose = LaunchConfiguration('z_pose', default='0.0')
-
     world = os.path.join(
-        get_package_share_directory('turtlebot3_gazebo'),
-        'worlds',
-        'turtlebot3_empty.world'
-    )
-
-    xacro_path = os.path.join(
         get_package_share_directory('deliverybot'),
-        'urdf',
-        'deliverybot.urdf.xacro'
+        'worlds',
+        # 'turtlebot3_empty.world'
+        'empty.world'
     )
 
-    sdf_path = os.path.join(
+    robot_sdf_path = os.path.join(
         get_package_share_directory('deliverybot'),
         'models',
         'model.sdf'
     )
-
-    robot_desc_config = xacro.process_file(xacro_path)
-    robot_desc = robot_desc_config.toxml()
+    
+    checkerboard_sdf_path = os.path.join(
+        get_package_share_directory('deliverybot'),
+        'models','checkerboard',
+        'checkerboard_8x6_003.sdf'
+    )
 
     gzserver_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -71,47 +61,39 @@ def generate_launch_description():
     )
 
     urdf_spawner_cmd = Node(
+        name='deliveryBot_spawner',
         package='gazebo_ros',
         executable='spawn_entity.py',
         output='screen',
         respawn=False,
-        arguments=["-file", sdf_path, "-entity","deliveryBot", '-x', x_pose,
-                   '-y', y_pose, '-z', z_pose]
+        arguments=["-file", robot_sdf_path, "-entity","deliveryBot", '-Y', '-0.733']
+    )
+    
+    checkerboard_right_spawner_cmd = Node(
+        name='checkerboard_right_spawner',
+        package='gazebo_ros',
+        executable='spawn_entity.py',
+        output='screen',
+        respawn=False,
+        arguments=["-file", checkerboard_sdf_path, "-entity","checkerboard_right", 
+                   '-x', '0.236','-y', '-0.03', '-z', '0.182', '-P', '1.57']
     )
 
-    rviz_cmd = Node(
-        package='rviz2',
-        executable='rviz2',
-        name='rviz2',
-        output='screen',
-        arguments=['-d', os.path.join(get_package_share_directory('deliverybot'), 'rviz', 'rviz_config.rviz')]
+    camera_right_calibrator_cmd = Node(
+        package='camera_calibration',
+        executable='cameracalibrator',
+        name='camera_right_calibrator',
+        arguments=["--no-service-check", "-p", "checkerboard", "--size", "8x6",
+                     "--square", "0.02", "--ros-args", "-r", "image:=/camera_right/image_raw", "-p", "camera:=/camera_right"]
     )
 
-    robot_state_publisher_cmd = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        name='robot_state_publisher',
-        output='screen',
-        parameters=[{
-            'use_sim_time': use_sim_time,
-            'robot_description': robot_desc
-            }],
-        )
-    
-    pcd_merger_cmd = Node(
-        package='deliverybot',
-        executable='mergepcd.py',
-        name='pcd_merger'
-        )
-    
     ld = LaunchDescription()
 
     # Add the commands to the launch description
     ld.add_action(gzserver_cmd)
     ld.add_action(gzclient_cmd)
-    ld.add_action(robot_state_publisher_cmd)
-    ld.add_action(rviz_cmd)
     ld.add_action(urdf_spawner_cmd)
-    ld.add_action(pcd_merger_cmd)
+    ld.add_action(checkerboard_right_spawner_cmd)
+    ld.add_action(camera_right_calibrator_cmd)
 
     return ld
