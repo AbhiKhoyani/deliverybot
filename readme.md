@@ -28,6 +28,17 @@ sudo apt install ros-humble-pcl-ros
 sudo apt install ros-humble-sensor-msgs
 sudo apt-get install ros-humble-sensor-msgs-py
 
-pip3 install Cython pcl
+sudo apt-get install ros-humble-navigation2 ros-humble-nav2-bringup
+
+git clone https://github.com/introlab/rtabmap.git src/rtabmap
+git clone --branch ros2 https://github.com/introlab/rtabmap_ros.git src/rtabmap_ros
+rosdep update && rosdep install --from-paths src --ignore-src -r -y
+export MAKEFLAGS="-j6" # Can be ignored if you have a lot of RAM (>16GB)
+colcon build --symlink-install --cmake-args -DRTABMAP_SYNC_MULTI_RGBD=ON -DRTABMAP_SYNC_USER_DATA=ON -DCMAKE_BUILD_TYPE=Release
+
+<!-- pip3 install Cython pcl -->
+
+git clone https://github.com/pixmoving-moveit/multi_lidar_calibration_ros2.git
+
 
 ```

@@ -12,23 +12,23 @@ class PointCloudMerger(Node):
         self.subscription1 = self.create_subscription(
             PointCloud2,
             '/camera_left/points',
-            self.point_cloud_callback_1,
+            self.point_cloud_callback_left,
             10)
         self.subscription2 = self.create_subscription(
             PointCloud2,
             '/camera_right/points',
-            self.point_cloud_callback_2,
+            self.point_cloud_callback_right,
             10)
         self.publisher = self.create_publisher(PointCloud2, '/base/points', 10)
-        self.point_cloud1 = None
-        self.point_cloud2 = None
+        self.pointcloud_left = None
+        self.pointcloud_right = None
 
-    def point_cloud_callback_1(self, msg):
-        self.point_cloud1 = self.convert_ros_to_pyntcloud(msg)
+    def point_cloud_callback_left(self, msg):
+        self.pointcloud_left = self.convert_ros_to_pyntcloud(msg)
         self.process_point_clouds()
 
-    def point_cloud_callback_2(self, msg):
-        self.point_cloud2 = self.convert_ros_to_pyntcloud(msg)
+    def point_cloud_callback_right(self, msg):
+        self.pointcloud_right = self.convert_ros_to_pyntcloud(msg)
         self.process_point_clouds()
 
     def convert_ros_to_pyntcloud(self, ros_cloud):
@@ -52,24 +52,25 @@ class PointCloudMerger(Node):
         return transformed_cloud
 
     def process_point_clouds(self):
-        if self.point_cloud1 is not None and self.point_cloud2 is not None:
+        if self.pointcloud_left is not None and self.pointcloud_right is not None:
             # Define transformation matrices (example identity matrices here)
-            transformation_matrix1 = np.array([[0.001,  0.342,  0.940,  0.048],
-                                               [0.000,  0.940, -0.342,  0.042],
-                                               [-1.000,  0.000,  0.001,  0.182],
-                                               [0.000,  0.000,  0.000,  1.000]])
-            transformation_matrix2 = np.array([[0.001, -0.342,  0.940,  0.036],
-                                               [-0.000,  0.940,  0.342, -0.009],
-                                               [-1.000, -0.000,  0.001,  0.182],
-                                               [0.000,  0.000,  0.000,  1.000]])
+            tf_left2base = np.array([[-0.669, 0.001,  0.743,  0.039],
+                                    [-0.743, -0.001, -0.669,  0.022],
+                                    [0.000, -1.000,  0.001, 0.165],
+                                    [0.000,  0.000,  0.000,  1.000]])
+            
+            tf_right2base = np.array([[0.669, 0.001,  0.743,  0.040],
+                                    [-0.743, 0.001, 0.669,  -0.022],
+                                    [0.000, -1.000,  0.001, 0.165],
+                                    [0.000,  0.000,  0.000,  1.000]])
 
 
             # Apply transformations
-            transformed_cloud1 = self.apply_transformation(self.point_cloud1, transformation_matrix1)
-            transformed_cloud2 = self.apply_transformation(self.point_cloud2, transformation_matrix2)
+            transformed_cloud_left = self.apply_transformation(self.pointcloud_left, tf_left2base)
+            transformed_cloud_right = self.apply_transformation(self.pointcloud_right, tf_right2base)
 
             # Merge point clouds
-            merged_cloud = self.merge_point_clouds(transformed_cloud1, transformed_cloud2)
+            merged_cloud = self.merge_point_clouds(transformed_cloud_left, transformed_cloud_right)
 
             # Convert to ROS message and publish
             ros_merged_cloud = self.convert_pyntcloud_to_ros(merged_cloud)

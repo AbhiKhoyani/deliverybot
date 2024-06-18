@@ -20,34 +20,27 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PythonExpression
-from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-
-
 
 import xacro
 
 def generate_launch_description():
-    pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
     self_dir = get_package_share_directory('deliverybot')
-
+    pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
+    
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-    use_simulator = LaunchConfiguration('use_simulator', default='true')
-    # use_robot_state_pub = LaunchConfiguration('use_robot_state_pub')
-    # use_rviz = LaunchConfiguration('use_rviz')
-    headless = LaunchConfiguration('headless', default='false')
-
+    
     x_pose = LaunchConfiguration('x_pose', default='0.0')
-    y_pose = LaunchConfiguration('y_pose', default='0.2')
+    y_pose = LaunchConfiguration('y_pose', default='0.0')
     z_pose = LaunchConfiguration('z_pose', default='0.0')
 
     world = os.path.join(
-        get_package_share_directory('turtlebot3_gazebo'),
+        self_dir,
         'worlds',
-        'turtlebot3_house.world'
+        'box.world'
     )
 
     xacro_path = os.path.join(
@@ -69,28 +62,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(pkg_gazebo_ros, 'launch', 'gzserver.launch.py')
         ),
-        launch_arguments={'world': world}.items(),
-        condition=IfCondition(use_simulator)
-    )
-
-    declare_use_simulator_cmd = DeclareLaunchArgument(
-        'use_simulator',
-        default_value='True',
-        description='Whether to start the simulator',
-    )
-    declare_simulator_cmd = DeclareLaunchArgument(
-        'headless', default_value='True', description='Whether to execute gzclient)'
-    )
-    
-    gazebo_client = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory('ros_gz_sim'),
-                         'launch',
-                         'gz_sim.launch.py')
-        ),
-        condition=IfCondition(PythonExpression(
-            [use_simulator, ' and not ', headless])),
-        launch_arguments={'gz_args': ['-v4 -g ']}.items(),
+        launch_arguments={'world': world}.items()
     )
 
     gzclient_cmd = IncludeLaunchDescription(
@@ -127,25 +99,25 @@ def generate_launch_description():
             }],
         )
     
-    teleop_keyboard_cmd = Node(
-        name='keyboard_controller',
-        package='teleop_twist_keyboard',
-        executable='teleop_twist_keyboard',
-        output='screen',
-        prefix = 'xterm -e',
+    # multi lidar calibration launch
+    mlc_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('multi_lidar_calibration'), 'launch', 'multi_lidar_calibration_ndt.launch.xml')
+        ),
+        launch_arguments={'initial_pose': "[0.03, 0.0, 0.03, 0.0, -1.46, 0.0]",
+                          'input/source_pointcloud':'/camera_left/points',
+                          'input/target_pointcloud':'/camera_right/points'}.items()
     )
+
 
     ld = LaunchDescription()
 
     # Add the commands to the launch description
-    ld.add_action(gzserver_cmd)
+    # ld.add_action(gzserver_cmd)
     # ld.add_action(gzclient_cmd)
-    ld.add_action(declare_use_simulator_cmd)
-    ld.add_action(declare_simulator_cmd)
-    ld.add_action(gazebo_client)
-    ld.add_action(robot_state_publisher_cmd)
-    ld.add_action(rviz_cmd)
-    ld.add_action(urdf_spawner_cmd)
-    ld.add_action(teleop_keyboard_cmd)
+    # ld.add_action(robot_state_publisher_cmd)
+    # ld.add_action(rviz_cmd)
+    # ld.add_action(urdf_spawner_cmd)
+    ld.add_action(mlc_cmd)
 
     return ld
