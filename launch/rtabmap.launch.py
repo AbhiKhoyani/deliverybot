@@ -25,6 +25,7 @@ def generate_launch_description():
     strategy = LaunchConfiguration('strategy')
     feature = LaunchConfiguration('feature')
     nn = LaunchConfiguration('nn')
+    qos = LaunchConfiguration('qos')
     max_depth = LaunchConfiguration('max_depth')
     min_inliers = LaunchConfiguration('min_inliers')
     inlier_distance = LaunchConfiguration('inlier_distance')
@@ -32,8 +33,8 @@ def generate_launch_description():
     odom_info_data = LaunchConfiguration('odom_info_data')
     wait_for_transform = LaunchConfiguration('wait_for_transform')
     
-    rviz_cmd = DeclareLaunchArgument('rviz', default_value='true')
-    rtabmap_viz_cmd = DeclareLaunchArgument('rtabmap_viz', default_value='false') 
+    rviz_cmd = DeclareLaunchArgument('rviz', default_value='false')
+    rtabmap_viz_cmd = DeclareLaunchArgument('rtabmap_viz', default_value='true') 
     strategy_cmd = DeclareLaunchArgument('strategy', default_value='"0"', 
                                          description='Strategy: 0=Frame-to-Map 1=Frame-to-Frame')
     feature_cmd = DeclareLaunchArgument('feature', default_value='"6"', 
@@ -42,6 +43,8 @@ def generate_launch_description():
                                   description='''Nearest neighbor strategy : 0=Linear, 1=FLANN_KDTREE, 2=FLANN_LSH, 3=BRUTEFORCE
         Set to 1 for float descriptor like SIFT/SURF
         Set to 3 for binary descriptor like ORB/FREAK/BRIEF/BRISK''')
+    qos_cmd= DeclareLaunchArgument('qos', default_value='2',
+                                         description='QoS used for input sensor topics')
     max_depth_cmd= DeclareLaunchArgument('max_depth', default_value='4.0',
                                          description='Maximum features depth (m)')
     min_inliers_cmd= DeclareLaunchArgument('min_inliers', default_value='"20"',
@@ -52,7 +55,7 @@ def generate_launch_description():
                                          description='Local map size: number of unique features to keep track')
     odom_info_data_cmd= DeclareLaunchArgument('odom_info_data', default_value='"true"',
                                               description='Fill odometry info messages with inliers/outliers data.')
-    wait_for_transform_cmd= DeclareLaunchArgument('wait_for_transform', default_value='0.1',
+    wait_for_transform_cmd= DeclareLaunchArgument('wait_for_transform', default_value='0.2',
                                                   description='')
 
 
@@ -64,7 +67,8 @@ def generate_launch_description():
             parameters=[{
                 'approx_sync': True,
                 'approx_sync_max_interval':0.04,
-                'sync_queue_size': 10
+                'sync_queue_size': 50,
+                'qos':qos,
             }],
             remappings=[
                 ('/rgb/image', '/camera_left/image_raw'),
@@ -80,7 +84,9 @@ def generate_launch_description():
             output='screen',
             parameters=[{
                 'approx_sync': True,
-                'sync_queue_size': 10
+                'approx_sync_max_interval':0.04,
+                'sync_queue_size': 50,
+                'qos':qos,
             }],
             remappings=[
                 ('/rgb/image', '/camera_right/image_raw'),
@@ -154,7 +160,7 @@ def generate_launch_description():
     # <!-- Visualisation RTAB-Map -->
     rtabmap_viz_node_cmd = Node(
         name='rtabmap_viz',
-        package='rtabmap_rviz',
+        package='rtabmap_viz',
         executable='rtabmap_viz',
         output='screen',
         condition=IfCondition(rtabmap_viz),
@@ -175,16 +181,6 @@ def generate_launch_description():
         ]
     )
 
-    # Visualization RVIZ 
-#   <node if="$(arg rviz)" pkg="rviz" exec="rviz" name="rviz" args="-d $(find rtabmap_demos)/launch/config/rgbd.rviz"/>
-    rviz_node_cmd = Node(
-        package='rviz2',
-        executable='rviz2',
-        name='rviz2',
-        output='screen',
-        condition=IfCondition(rviz),
-        arguments=['-d', os.path.join(get_package_share_directory('rtabmap_demos'), 'launch', 'config' ,'rgbd.rviz')]
-    )
 
 
     ld = LaunchDescription()
@@ -195,6 +191,7 @@ def generate_launch_description():
     ld.add_action(strategy_cmd)
     ld.add_action(feature_cmd)
     ld.add_action(nn_cmd)
+    ld.add_action(qos_cmd)
     ld.add_action(max_depth_cmd)
     ld.add_action(min_inliers_cmd)
     ld.add_action(inlier_distance_cmd)
@@ -205,8 +202,8 @@ def generate_launch_description():
     ld.add_action(camera_left_rgbd_cmd)
     ld.add_action(camera_right_rgbd_cmd)
     ld.add_action(rtabmap_odom_cmd)
-    ld.add_action(rtabmap_slam_cmd)
+    # ld.add_action(rtabmap_slam_cmd)
     ld.add_action(rtabmap_viz_node_cmd)
-    ld.add_action(rviz_node_cmd)
+    # ld.add_action(rviz_node_cmd)
 
     return ld
