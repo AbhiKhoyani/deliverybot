@@ -5,6 +5,14 @@ This project contains the necessary moduels for deliverybot. Deliverybot has 2 R
 
 TODO: As of now, I was able to finish this assignment partially only considering various reasons. Out of five main component of the assignment, I was able to build a robot with 2 RGBD camera, calculate intrinsic calibration, perform mapping using SLAM and calculate cost-map using it, and finally navigation. Extrinsic calibration, various test cases to check all of the above task, and CICD build pipeline is remained. For the SLAM, and navigation also, I was able to verify it partially because of the limitation of my machine. As, when I'm launching robot, gazebo, rviz, altogether with SLAM ododmetry and mapping task, RGBD driver is publishing 6-8 frames only `image_raw` and `/depth/image_raw` [See this Issue](https://github.com/introlab/rtabmap_ros/issues/1054) which fails `rgbd_sync` node so further pipeline won't work at all if there's no enough images. However, as per the code, SLAM and navigation both should work with better system as I tried to run them using wheel odometry.
 
+To build the project:
+```
+> cd ROS2
+> git clone https://github.com/AbhiKhoyani/deliverybot.git src/deliverybot
+> colcon build --packages-selected deliverybot
+```
+
+
 This bot has the following modules incorporated.
 1. **Main Robot**: As described above, main robot with 2 RGBD camera. Check description file in `./urdf/deliverybot.urdf.xacro` and `./models/model.sdf`. I've treid to include Intel Realsense D435 RGBD camera, but it's driver may not allow multiple camera so I've used depth camera drivers from `gazebo_ros_pkgs`. To launch the robot in gazebo and rviz run `ros2 launch deliverybot deliverybot_house.launch.py`, that will launch the robot in Turtlebot3_House world and show respective rviz with camera, pointcloud, TF frame, and robot description.
 
