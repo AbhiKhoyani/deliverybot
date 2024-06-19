@@ -1,0 +1,28 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  
+jobs:
+
+  build:
+
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag ros:humble-desktop:$(date +%s)
+
+    - name: Intrinsic Calibration
+      shell: bash
+      run: ./scripts/intrinsic_test.sh
+
+    - name: Extrinsic Calibration
+      shell: bash
+      run: ./scripts/extrinsic_test.sh
+
+    - name: Navigation Plan
+      shell: bash
+      run: ./scripts/navigation_test.sh
